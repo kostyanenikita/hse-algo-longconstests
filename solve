@@ -4,12 +4,12 @@ struct node {
     int value;
     node* next;
 
-    node()
+    explicit node()
             : next(nullptr)
     { }
 
-    node(int x)
-            : value(x)
+    explicit node(int newValue)
+            : value(newValue)
             , next(nullptr)
     { }
 };
@@ -17,96 +17,123 @@ struct node {
 class ForwardList {
 public:
     ForwardList()
-            : first(nullptr)
-            , size(0)
+            : _begin(nullptr)
     { }
 
     ~ForwardList() {
-        node* current = first;
-        while (current) {
-            node* next = current->next;
-            delete current;
-            current = next;
+        node* currentNode = _begin;
+        while (currentNode) {
+            node* next = currentNode->next;
+            delete currentNode;
+            currentNode = next;
         }
+    }
+
+    node* begin() const {
+        return _begin;
     }
 
     void push(int x) {
-        node* current = new node;
-        current->value = x;
-        if (first) {
-            current->next = first;
+        node* newNode = new node(x);
+        if (_begin) {
+            newNode->next = _begin;
         }
-        first = current;
-        ++size;
+        _begin = newNode;
     }
 
     void reverse() {
-        node* current = first;
-        node* previous = nullptr;
-        while (current) {
-            node* next = current->next;
-            current->next = previous;
-            previous = current;
-            current = next;
+        node* currentNode = _begin;
+        node* previousNode = nullptr;
+        while (currentNode) {
+            node* next = currentNode->next;
+            currentNode->next = previousNode;
+            previousNode = currentNode;
+            currentNode = next;
         }
-        first = previous;
+        _begin = previousNode;
     }
 
-    node* front() {
-        return first;
+    ForwardList& operator=(ForwardList const& other) {
+        _begin = other.begin();
+        return *this;
     }
+
+    ForwardList& operator=(node* const& other) {
+        _begin = other;
+        return *this;
+    }
+
+    friend std::ostream& operator<<(std::ostream& out, ForwardList& forwardList);
 
 private:
-    node* first;
-    int size;
+    node* _begin;
 };
 
-void MergeSort(node* it, int length) {
-    if (length == 1) {
-        return;
-    } else {
-        node* first = it;
-        node* second = it;
+std::ostream& operator<<(std::ostream& out, ForwardList& forwardList) {
+    node* current = forwardList.begin();
+    while (current) {
+        out << current->value << ' ';
+        current = current->next;
+    }
+    return out;
+}
 
-        for (int i = 0; i != length / 2; ++i) {
-            second = second->next;
-        }
+std::pair<node*, node*> Merge(node* firstNode, int firstSize, node* secondNode, int secondSize) {
+    node* newBegin = nullptr;
+    node* newEnd = nullptr;
 
-        MergeSort(first, length / 2);
-        MergeSort(second, length - length / 2);
-
-        ForwardList result;
-
-        int f = 0, s = 0;
-        while (f != length / 2 || s != length - length / 2) {
-            if (f == length / 2) {
-                result.push(second->value);
-                second = second->next;
-                ++s;
-            } else if (s == length - length / 2) {
-                result.push(first->value);
-                first = first->next;
-                ++f;
-            } else if (first->value < second->value) {
-                result.push(first->value);
-                first = first->next;
-                ++f;
-            } else {
-                result.push(second->value);
-                second = second->next;
-                ++s;
+    while (firstSize || secondSize) {
+        if (!secondSize || (firstSize && firstNode->value < secondNode->value)) {
+            if (newEnd) {
+                newEnd->next = firstNode;
             }
+            newEnd = firstNode;
+            firstNode = firstNode->next;
+            --firstSize;
+        } else {
+            if (newEnd) {
+                newEnd->next = secondNode;
+            }
+            newEnd = secondNode;
+            secondNode = secondNode->next;
+            --secondSize;
         }
 
-        result.reverse();
-
-        node* current = result.front();
-        while (current) {
-            it->value = current->value;
-            it = it->next;
-            current = current->next;
+        if (!newBegin) {
+            newBegin = newEnd;
         }
     }
+
+    newEnd->next = nullptr;
+
+    return std::make_pair(newBegin, newEnd);
+}
+
+std::pair<node*, node*> MergeSort(node* currentBegin, int currentSize) {
+    if (currentSize == 1) {
+        return std::make_pair(currentBegin, currentBegin);
+    }
+
+    node* firstBegin = currentBegin;
+    node* firstEnd = nullptr;
+
+    node* secondBegin = currentBegin;
+
+    for (int i = 0; i != currentSize / 2; ++i) {
+        secondBegin = secondBegin->next;
+    }
+
+    std::pair<node*, node*> result;
+
+    result = MergeSort(firstBegin, currentSize / 2);
+    firstBegin = result.first, firstEnd = result.second;
+
+    result = MergeSort(secondBegin, currentSize - currentSize / 2);
+    secondBegin = result.first;
+
+    firstEnd->next = secondBegin;
+
+    return Merge(firstBegin, currentSize / 2, secondBegin, currentSize - currentSize / 2);
 }
 
 int main() {
@@ -115,24 +142,19 @@ int main() {
     int n;
     std::cin >> n;
 
-    ForwardList a;
+    ForwardList forwardList;
 
     for (int i = 0; i != n; ++i) {
         int x;
         std::cin >> x;
-        a.push(x);
+        forwardList.push(x);
     }
 
-    a.reverse();
+    forwardList.reverse();
 
-    MergeSort(a.front(), n);
+    forwardList = MergeSort(forwardList.begin(), n).first;
 
-    auto current = a.front();
-    while (current) {
-        std::cout << current->value << ' ';
-        current = current->next;
-    }
-    std::cout << '\n';
+    std::cout << forwardList << '\n';
 
     return 0;
 }
