@@ -5,7 +5,8 @@ struct node {
     node* next;
 
     explicit node()
-            : next(nullptr)
+            : value(0)
+            , next(nullptr)
     { }
 
     explicit node(int newValue)
@@ -21,11 +22,11 @@ public:
     { }
 
     ~ForwardList() {
-        node* currentNode = _begin;
-        while (currentNode) {
-            node* next = currentNode->next;
-            delete currentNode;
-            currentNode = next;
+        node* removableNode = _begin;
+        while (removableNode) {
+            node* nextNode = removableNode->next;
+            delete removableNode;
+            removableNode = nextNode;
         }
     }
 
@@ -45,10 +46,10 @@ public:
         node* currentNode = _begin;
         node* previousNode = nullptr;
         while (currentNode) {
-            node* next = currentNode->next;
+            node* nextNode = currentNode->next;
             currentNode->next = previousNode;
             previousNode = currentNode;
-            currentNode = next;
+            currentNode = nextNode;
         }
         _begin = previousNode;
     }
@@ -70,89 +71,80 @@ private:
 };
 
 std::ostream& operator<<(std::ostream& out, ForwardList& forwardList) {
-    node* current = forwardList.begin();
-    while (current) {
-        out << current->value << ' ';
-        current = current->next;
+    node* currentNode = forwardList.begin();
+    while (currentNode) {
+        out << currentNode->value << ' ';
+        currentNode = currentNode->next;
     }
     return out;
 }
 
-std::pair<node*, node*> Merge(node* firstNode, int firstSize, node* secondNode, int secondSize) {
+node* Merge(node* firstNode, node* secondNode) {
     node* newBegin = nullptr;
     node* newEnd = nullptr;
 
-    while (firstSize || secondSize) {
-        if (!secondSize || (firstSize && firstNode->value < secondNode->value)) {
+    while (firstNode || secondNode) {
+        if (!secondNode || (firstNode && firstNode->value < secondNode->value)) {
             if (newEnd) {
                 newEnd->next = firstNode;
+            } else {
+                newBegin = firstNode;
             }
             newEnd = firstNode;
             firstNode = firstNode->next;
-            --firstSize;
         } else {
             if (newEnd) {
                 newEnd->next = secondNode;
+            } else {
+                newBegin = secondNode;
             }
             newEnd = secondNode;
             secondNode = secondNode->next;
-            --secondSize;
-        }
-
-        if (!newBegin) {
-            newBegin = newEnd;
         }
     }
 
     newEnd->next = nullptr;
 
-    return std::make_pair(newBegin, newEnd);
+    return newBegin;
 }
 
-std::pair<node*, node*> MergeSort(node* currentBegin, int currentSize) {
+node* MergeSort(node* currentBegin, int currentSize) {
     if (currentSize == 1) {
-        return std::make_pair(currentBegin, currentBegin);
+        return currentBegin;
     }
 
     node* firstBegin = currentBegin;
-    node* firstEnd = nullptr;
-
     node* secondBegin = currentBegin;
 
-    for (int i = 0; i != currentSize / 2; ++i) {
+    for (int i = 0; i != currentSize / 2 - 1; ++i) {
         secondBegin = secondBegin->next;
     }
+    node* firstEnd = secondBegin;
+    secondBegin = secondBegin->next;
+    firstEnd->next = nullptr;
 
-    std::pair<node*, node*> result;
+    firstBegin = MergeSort(firstBegin, currentSize / 2);
+    secondBegin = MergeSort(secondBegin, currentSize - currentSize / 2);
 
-    result = MergeSort(firstBegin, currentSize / 2);
-    firstBegin = result.first, firstEnd = result.second;
-
-    result = MergeSort(secondBegin, currentSize - currentSize / 2);
-    secondBegin = result.first;
-
-    firstEnd->next = secondBegin;
-
-    return Merge(firstBegin, currentSize / 2, secondBegin, currentSize - currentSize / 2);
+    return Merge(firstBegin, secondBegin);
 }
 
 int main() {
-    std::ios_base::sync_with_stdio(0);
+    std::ios_base::sync_with_stdio(false);
 
-    int n;
-    std::cin >> n;
+    int elementsNumber;
+    std::cin >> elementsNumber;
 
     ForwardList forwardList;
 
-    for (int i = 0; i != n; ++i) {
+    for (int i = 0; i != elementsNumber; ++i) {
         int x;
         std::cin >> x;
         forwardList.push(x);
     }
 
     forwardList.reverse();
-
-    forwardList = MergeSort(forwardList.begin(), n).first;
+    forwardList = MergeSort(forwardList.begin(), elementsNumber);
 
     std::cout << forwardList << '\n';
 
