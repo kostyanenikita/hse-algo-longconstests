@@ -110,18 +110,16 @@ node* Merge(node* firstNode, node* secondNode) {
 
 node* MergeSort(node* currentBegin, int currentSize) {
     if (currentSize == 1) {
+        currentBegin->next = nullptr;
         return currentBegin;
     }
 
     node* firstBegin = currentBegin;
     node* secondBegin = currentBegin;
 
-    for (int i = 0; i != currentSize / 2 - 1; ++i) {
+    for (int i = 0; i != currentSize / 2; ++i) {
         secondBegin = secondBegin->next;
     }
-    node* firstEnd = secondBegin;
-    secondBegin = secondBegin->next;
-    firstEnd->next = nullptr;
 
     firstBegin = MergeSort(firstBegin, currentSize / 2);
     secondBegin = MergeSort(secondBegin, currentSize - currentSize / 2);
