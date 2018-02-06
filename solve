@@ -9,8 +9,8 @@ struct Node {
             , next(nullptr)
     { }
 
-    explicit Node(int newValue)
-            : value(newValue)
+    explicit Node(int value)
+            : value(value)
             , next(nullptr)
     { }
 };
@@ -18,7 +18,7 @@ struct Node {
 class ForwardList {
 public:
     ForwardList()
-            : _begin(nullptr)
+        : _begin(nullptr)
     { }
 
     ~ForwardList() {
@@ -38,7 +38,7 @@ public:
         return _begin;
     }
 
-    void push(int x) {
+    void push_front(int x) {
         Node* newNode = new Node(x);
         if (_begin) {
             newNode->next = _begin;
@@ -58,11 +58,6 @@ public:
         _begin = previous;
     }
 
-    ForwardList& operator=(const ForwardList& other) {
-        _begin = std::move(other.begin());
-        return *this;
-    }
-
     friend std::ostream& operator<<(std::ostream& out, const ForwardList& forwardList);
 
 private:
@@ -72,7 +67,10 @@ private:
 std::ostream& operator<<(std::ostream& out, const ForwardList& forwardList) {
     Node* node = forwardList.begin();
     while (node) {
-        out << node->value << ' ';
+        out << node->value;
+        if (node->next) {
+            out << ' ';
+        }
         node = node->next;
     }
     return out;
@@ -107,7 +105,7 @@ Node* Merge(Node* lhs, Node* rhs) {
     return newBegin;
 }
 
-Node* MergeSort(Node* begin, int size) {
+Node* MergeSort(Node* begin, size_t size) {
     if (size == 1) {
         begin->next = nullptr;
         return begin;
@@ -126,8 +124,14 @@ Node* MergeSort(Node* begin, int size) {
     return Merge(firstBegin, secondBegin);
 }
 
-void Sort(ForwardList& forwardList, int elementsNumber) {
-    forwardList.assign(MergeSort(forwardList.begin(), elementsNumber));
+void Sort(ForwardList& forwardList) {
+    Node* begin = forwardList.begin();
+    size_t length = 0;
+    while (begin) {
+        ++length;
+        begin = begin->next;
+    }
+    forwardList.assign(MergeSort(forwardList.begin(), length));
 }
 
 int main() {
@@ -141,10 +145,10 @@ int main() {
     for (int i = 0; i != elementsNumber; ++i) {
         int x;
         std::cin >> x;
-        forwardList.push(x);
+        forwardList.push_front(x);
     }
 
-    Sort(forwardList, elementsNumber);
+    Sort(forwardList);
 
     std::cout << forwardList << '\n';
 
