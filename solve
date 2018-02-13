@@ -18,7 +18,7 @@ struct Node {
 class ForwardList {
 public:
     ForwardList()
-        : _begin(nullptr)
+            : _begin(nullptr)
     { }
 
     ~ForwardList() {
@@ -57,6 +57,10 @@ public:
         }
         _begin = previous;
     }
+
+    ForwardList(const ForwardList&) = delete;
+
+    ForwardList& operator=(const ForwardList&) = delete;
 
     friend std::ostream& operator<<(std::ostream& out, const ForwardList& forwardList);
 
